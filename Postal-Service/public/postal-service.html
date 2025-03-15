@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postal Service</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Postal Service System</h1>
+        <button onclick="navigateTo('addPackage')">Add Package</button>
+        <button onclick="navigateTo('viewPackages')">View Packages</button>
+        <button onclick="navigateTo('viewLabel')">View Label</button>
+        <button onclick="navigateTo('calculateCost')">Calculate Cost</button>
+    </div>
+    
+    <div class="container">
+        <div id="addPackage" class="section">
+            <h2>Add Package</h2>
+            <form id="packageForm">
+                <input type="text" id="senderName" placeholder="Sender's Name" required><br>
+                <input type="text" id="receiverName" placeholder="Receiver's Name" required><br>
+                <input type="text" id="senderAddress" placeholder="Sender's Address" required><br>
+                <input type="text" id="receiverAddress" placeholder="Receiver's Address" required><br>
+                <input type="number" id="weight" step="0.01" placeholder="Weight (kg)" required><br>
+                <select id="shippingMethod">
+                    <option value="One-Day">One-Day</option>
+                    <option value="Two-Day">Two-Day</option>
+                </select><br>
+                <button type="button" onclick="addPackage()">Add Package</button>
+            </form>
+        </div>
+
+        <div id="viewPackages" class="section">
+            <h2>View Packages</h2>
+            <ul id="packageList"></ul>
+        </div>
+
+        <div id="viewLabel" class="section">
+            <h2>View Label</h2>
+            <input type="text" id="trackingInput" placeholder="Enter Tracking Number">
+            <button onclick="viewLabel()">View</button>
+            <pre id="packageLabel">No package selected.</pre>
+        </div>
+
+        <div id="calculateCost" class="section">
+            <h2>Calculate Cost</h2>
+            <input type="number" id="calcWeight" step="0.01" placeholder="Enter Weight (kg)" required>
+            <select id="calcShippingMethod">
+                <option value="One-Day">One-Day</option>
+                <option value="Two-Day">Two-Day</option>
+            </select><br>
+            <button onclick="calculateCost()">Calculate</button>
+            <p id="costDisplay">Cost: $0.00</p>
+        </div>
+    </div>
+    
+    <script src="main.js"></script>
+</body>
+</html>

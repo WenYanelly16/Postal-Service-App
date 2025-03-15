@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 50%;
+    margin: 20px auto;
+    text-align: center;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #333;
+}
+
+.menu button {
+    margin: 5px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.menu button:hover {
+    background-color: #0056b3;
+}
+
+.section {
+    display: none; /* Hide all sections by default */
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+input, select, button {
+    margin: 5px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    cursor: pointer;
+    background-color: #28a745;
+    color: white;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+#packageList {
+    list-style-type: none;
+    padding: 0;
+}
+
+#packageList li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+#packageList li:last-child {
+    border-bottom: none;
+}
+
+#packageLabel {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: left;
+}
+
+#updateStatusResult {
+    color: #28a745;
+    font-weight: bold;
+}
