@@ -1,4 +1,4 @@
-import { IPackage } from "./IPackage";
+import { IPackage } from "../Interface/IPackage";
 
 export abstract class Package implements IPackage {
     senderName: string;

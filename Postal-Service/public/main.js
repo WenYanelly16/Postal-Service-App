@@ -1,75 +1,57 @@
-let packages = [];
+class Package {
+    constructor(senderName, receiverName, senderAddress, receiverAddress, weight, costPerUnitWeight, trackingNumber) {
+        this.senderName = senderName;
+        this.receiverName = receiverName;
+        this.senderAddress = senderAddress;
+        this.receiverAddress = receiverAddress;
+        this.weight = weight;
+        this.costPerUnitWeight = costPerUnitWeight;
+        this.trackingNumber = trackingNumber;
+        this.status = "Created";
+    }
 
-function navigateTo(sectionId) {
-    document.querySelectorAll('.section').forEach(section => section.style.display = 'none');
-    document.getElementById(sectionId).style.display = 'block';
-}
+    printLabel() {
+        console.log(`Tracking Number: ${this.trackingNumber}`);
+        console.log(`Sender: ${this.senderName} (${this.senderAddress})`);
+        console.log(`Receiver: ${this.receiverName} (${this.receiverAddress})`);
+        console.log(`Weight: ${this.weight} kg`);
+        console.log(`Status: ${this.status}`);
+    }
 
-function generateTrackingNumber() {
-    return 'PKG-' + Math.floor(Math.random() * 100000);
-}
-
-function addPackage() {
-    let packageData = {
-        senderName: document.getElementById('senderName').value,
-        receiverName: document.getElementById('receiverName').value,
-        senderAddress: document.getElementById('senderAddress').value,
-        receiverAddress: document.getElementById('receiverAddress').value,
-        weight: parseFloat(document.getElementById('weight').value),
-        shippingMethod: document.getElementById('shippingMethod').value,
-        trackingNumber: generateTrackingNumber(),
-        status: "Created"
-    };
-    packages.push(packageData);
-    alert(`Package added! Tracking Number: ${packageData.trackingNumber}`);
-    updatePackageList();
-}
-
-function updatePackageList() {
-    let list = document.getElementById('packageList');
-    list.innerHTML = "";
-    packages.forEach(pkg => {
-        let item = document.createElement('li');
-        item.innerHTML = `
-            <span class="package-item">${pkg.trackingNumber} - ${pkg.receiverName} (${pkg.status})</span>
-            <button onclick="updateStatus('${pkg.trackingNumber}')">Update Status</button>
-        `;
-        list.appendChild(item);
-    });
-}
-
-function updateStatus(trackingNumber) {
-    let pkg = packages.find(p => p.trackingNumber === trackingNumber);
-    if (pkg) {
-        let newStatus = prompt("Enter new status (Created, Shipped, Delivered):", pkg.status);
-        if (newStatus) {
-            pkg.status = newStatus;
-            updatePackageList();
-        }
+    updateStatus(newStatus) {
+        this.status = newStatus;
+        console.log(`Status updated to: ${this.status}`);
     }
 }
 
-function viewLabel() {
-    let trackingNum = document.getElementById('trackingInput').value;
-    let pkg = packages.find(p => p.trackingNumber === trackingNum);
-    if (pkg) {
-        document.getElementById('packageLabel').textContent = `
-            Tracking #: ${pkg.trackingNumber}
-            From: ${pkg.senderName}, ${pkg.senderAddress}
-            To: ${pkg.receiverName}, ${pkg.receiverAddress}
-            Weight: ${pkg.weight}kg
-            Status: ${pkg.status}
-        `;
-    } else {
-        alert('Tracking number not found.');
+class OneDayPackage extends Package {
+    constructor(senderName, receiverName, senderAddress, receiverAddress, weight, costPerUnitWeight, trackingNumber, flatFee) {
+        super(senderName, receiverName, senderAddress, receiverAddress, weight, costPerUnitWeight, trackingNumber);
+        this.flatFee = flatFee;
+    }
+
+    calculateCost() {
+        return (this.weight * this.costPerUnitWeight) + this.flatFee;
     }
 }
 
-function calculateCost() {
-    let weight = parseFloat(document.getElementById('calcWeight').value);
-    let shippingMethod = document.getElementById('calcShippingMethod').value;
-    let costPerKg = 2;
-    let flatFee = shippingMethod === "One-Day" ? 10 : 5;
-    let totalCost = (weight * costPerKg) + flatFee;
-    document.getElementById('costDisplay').textContent = `Cost: $${totalCost.toFixed(2)}`;
+class TwoDayPackage extends Package {
+    constructor(senderName, receiverName, senderAddress, receiverAddress, weight, costPerUnitWeight, trackingNumber, flatFee) {
+        super(senderName, receiverName, senderAddress, receiverAddress, weight, costPerUnitWeight, trackingNumber);
+        this.flatFee = flatFee;
+    }
+
+    calculateCost() {
+        return (this.weight * this.costPerUnitWeight) + this.flatFee;
+    }
 }
+
+// Example usage (browser console or DOM interaction)
+document.addEventListener("DOMContentLoaded", () => {
+    const pkg = new OneDayPackage(
+        "Alice", "Bob", "123 Main St", "456 Elm St", 2.5, 10, "TRACK123", 15
+    );
+
+    pkg.printLabel();
+    console.log("Cost: $" + pkg.calculateCost());
+});

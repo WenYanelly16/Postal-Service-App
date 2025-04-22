@@ -1,5 +1,5 @@
 import { Package } from "./Package";
-import { ITwoDayPackage } from "./ITwoDayPackage";
+import { ITwoDayPackage } from "../Interface/ITwoDayPackage";
 
 export class TwoDayPackage extends Package implements ITwoDayPackage {
     flatFee: number;

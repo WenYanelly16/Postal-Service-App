@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "ejs": "^3.1.8",
+    "express": "^5.1.0",
+    "pg": "^8.14.1"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.2",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.14.1",
+    "@types/pg": "^8.11.13",
+    "dotenv": "^16.5.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.6"
+  },
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node server.js"
+  }
+}

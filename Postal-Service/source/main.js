@@ -1,3 +1,4 @@
+"use strict";
 /*import { OneDayPackage } from "./OneDayPackage";
 import { TwoDayPackage } from "./TwoDayPackage";
 import { IPackage } from "./IPackage";
