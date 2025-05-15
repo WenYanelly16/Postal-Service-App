@@ -1,0 +1,2 @@
+//interface/IPackage.ts
+export {};

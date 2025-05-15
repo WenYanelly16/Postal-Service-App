@@ -1,0 +1,2 @@
+//interface/ITwoDayPackage.ts
+export {};
