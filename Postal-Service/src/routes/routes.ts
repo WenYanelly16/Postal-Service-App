@@ -1,17 +1,31 @@
 // routes/packageRoutes.ts
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { PackageController } from '../controllers/packageController.js';
+import { Package } from '../models/package.js';
 
 const router = Router();
 
-// Create a new package
-router.post('/packages', PackageController.addPackage);
+// View Route (HTML)
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const packages = await Package.findAll();
+    res.render('index', { packages });
+  } catch (err) {
+    res.status(500).render('error', {
+      title: 'Server Error',
+      message: 'Failed to load packages',
+      error: err
+    });
+  }
+});
 
-// List all packages
-router.get('/packages', PackageController.getAllPackages);
-
-// Get a single package by tracking number
-router.get('/packages/:trackingNumber', PackageController.getPackage);
+// API Routes (JSON)
+router.post('/api/packages', PackageController.createPackage);
+router.get('/api/packages', PackageController.getAllPackages);
+router.get('/api/packages/:trackingNumber', PackageController.getPackage);
+router.patch('/api/packages/:trackingNumber/status', PackageController.updatePackageStatus);
+router.delete('/api/packages/:trackingNumber', PackageController.deletePackage);
+router.post('/api/packages/calculate-shipping', PackageController.calculateShippingCost);
 
 export default router;
 

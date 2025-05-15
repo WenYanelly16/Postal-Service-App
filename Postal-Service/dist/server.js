@@ -8,7 +8,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 2022;
 
 // Middleware
 app.use(express.json());
@@ -36,9 +35,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-}).on('error', (err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
+const PORT = 2022;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}/`);
 });

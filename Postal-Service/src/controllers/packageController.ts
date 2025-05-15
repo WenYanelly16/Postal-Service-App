@@ -1,66 +1,248 @@
 // controllers/PackageController.ts
 import { Request, Response } from 'express';
-import { Pool } from 'pg';
-import { Package } from '../models/package.js'; // Adjust import if necessary
-
-const pool = new Pool(); // Initialize your PostgreSQL connection pool here
+import { Package } from '../models/package.js';
+import { OneDayPackage } from '../models/OneDayPackage.js';
+import { TwoDayPackage } from '../models/TwoDayPackage.js';
 
 export class PackageController {
+  static async createPackage(req: Request, res: Response) {
+    try {
+      const {
+        senderName,
+        receiverName,
+        senderAddress,
+        receiverAddress,
+        weight,
+        costPerUnitWeight,
+        shippingMethod
+      }: {
+        senderName: string;
+        receiverName: string;
+        senderAddress?: string;
+        receiverAddress?: string;
+        weight: number | string;
+        costPerUnitWeight?: number | string;
+        shippingMethod?: string;
+      } = req.body;
 
-    // Create a new package and store it in the database
-    static async addPackage(req: Request, res: Response): Promise<void> {
-        const { senderName, receiverName, senderAddress, receiverAddress, weight, costPerUnitWeight, shippingMethod } = req.body;
+      if (!senderName || !receiverName || !weight) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          required: ['senderName', 'receiverName', 'weight']
+        });
+      }
 
-        // Generate a tracking number for the new package
-        const trackingNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-        const status = 'Created'; // Default status for new packages
+      const newPackage = await Package.create({
+        senderName,
+        receiverName,
+        senderAddress,
+        receiverAddress,
+        weight: parseFloat(weight as string),
+        costPerUnitWeight: parseFloat((costPerUnitWeight || '5') as string),
+        shippingMethod: shippingMethod || 'standard'
+      });
 
-        try {
-            // Insert package details into the database
-            const result = await pool.query(
-                `INSERT INTO packages (sender_name, receiver_name, sender_address, receiver_address, weight, cost_per_unit_weight, tracking_number, status, shipping_method) 
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-                [senderName, receiverName, senderAddress, receiverAddress, weight, costPerUnitWeight, trackingNumber, status, shippingMethod]
-            );
+      return res.status(201).json({
+        success: true,
+        tracking_number: newPackage.tracking_number,
+        package: newPackage
+      });
 
-            const newPackage = result.rows[0]; // Get the inserted package
-            res.status(201).json(newPackage); // Respond with the newly created package
-
-        } catch (err) {
-            console.error(err);
-            res.status(500).send('Error creating package');
-        }
+    } catch (error: any) {
+      console.error('Error creating package:', error);
+      return res.status(500).json({
+        error: 'Failed to create package',
+        details: error.message
+      });
     }
+  }
 
-    // Get a list of all packages from the database
-    static async getAllPackages(req: Request, res: Response): Promise<void> {
-        try {
-            const result = await pool.query('SELECT * FROM packages');
-            res.status(200).json(result.rows); // Respond with all packages
-        } catch (err) {
-            console.error(err);
-            res.status(500).send('Error retrieving packages');
-        }
+  static async getAllPackages(req: Request, res: Response) {
+    try {
+      const packages = await Package.findAll();
+      res.json({ success: true, packages });
+    } catch (error: any) {
+      console.error('Error fetching all packages:', error);
+      res.status(500).json({ error: 'Failed to fetch packages', details: error.message });
     }
+  }
 
-    // Get a specific package by tracking number
-    static async getPackage(req: Request, res: Response): Promise<void> {
-        const { trackingNumber } = req.params;
+  static async getPackage(req: Request, res: Response) {
+    try {
+      const { trackingNumber } = req.params;
 
-        try {
-            const result = await pool.query('SELECT * FROM packages WHERE tracking_number = $1', [trackingNumber]);
+      if (!trackingNumber) {
+        return res.status(400).json({ error: 'Tracking number is required' });
+      }
 
-            if (result.rows.length === 0) {
-                res.status(404).send('Package not found');
-            } else {
-                res.status(200).json(result.rows[0]); // Respond with the package
+      const pkg = await Package.findByTrackingNumber(trackingNumber);
+
+      if (!pkg) {
+        return res.status(404).json({
+          error: 'Package not found',
+          tracking_number: trackingNumber
+        });
+      }
+
+      res.json({
+        success: true,
+        package: pkg,
+        label: pkg.generateLabel()
+      });
+    } catch (error: any) {
+      console.error('Error fetching package:', error);
+      res.status(500).json({
+        error: 'Failed to fetch package',
+        details: error.message
+      });
+    }
+  }
+
+  static async updatePackageStatus(req: Request, res: Response) {
+    try {
+      const { trackingNumber } = req.params;
+      const { status } = req.body as { status?: string };
+
+      if (!trackingNumber || !status) {
+        return res.status(400).json({
+          error: 'Tracking number and status are required'
+        });
+      }
+
+      const pkg = await Package.findByTrackingNumber(trackingNumber);
+
+      if (!pkg) {
+        return res.status(404).json({
+          error: 'Package not found',
+          tracking_number: trackingNumber
+        });
+      }
+
+      const updatedPackage = await pkg.updateStatus(status);
+
+      res.json({
+        success: true,
+        message: 'Package status updated',
+        package: updatedPackage
+      });
+    } catch (error: any) {
+      console.error('Error updating package status:', error);
+      res.status(500).json({
+        error: 'Failed to update package status',
+        details: error.message
+      });
+    }
+  }
+
+  static async deletePackage(req: Request, res: Response) {
+    try {
+      const { trackingNumber } = req.params;
+
+      if (!trackingNumber) {
+        return res.status(400).json({ error: 'Tracking number is required' });
+      }
+
+      const deletedPackage = await Package.delete(trackingNumber);
+
+      if (!deletedPackage) {
+        return res.status(404).json({
+          error: 'Package not found',
+          tracking_number: trackingNumber
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Package deleted successfully',
+        package: deletedPackage
+      });
+    } catch (error: any) {
+      console.error('Error deleting package:', error);
+      res.status(500).json({
+        error: 'Failed to delete package',
+        details: error.message
+      });
+    }
+  }
+
+  static async calculateShippingCost(req: Request, res: Response) {
+    try {
+      const {
+        senderName = 'Calculation Temp',
+        receiverName = 'Calculation Temp',
+        senderAddress = 'N/A',
+        receiverAddress = 'N/A',
+        weight,
+        shippingMethod,
+        calculateOnly = false
+      }: {
+        senderName?: string;
+        receiverName?: string;
+        senderAddress?: string;
+        receiverAddress?: string;
+        weight?: number | string;
+        shippingMethod?: string;
+        calculateOnly?: boolean;
+      } = req.body;
+
+      if (!weight || !shippingMethod) {
+        return res.status(400).json({
+          error: 'Weight and shipping method are required'
+        });
+      }
+
+      const tempPackage = new Package({
+        sender_name: senderName,
+        receiver_name: receiverName,
+        sender_address: senderAddress,
+        receiver_address: receiverAddress,
+        weight: parseFloat(weight as string),
+        cost_per_unit_weight: 5,
+        shipping_method: shippingMethod,
+        tracking_number: 'TEMP-' + Math.random().toString(36).substr(2, 9)
+      });
+
+      const cost = tempPackage.calculateCost();
+
+      let savedPackage = null;
+      if (!calculateOnly) {
+        savedPackage = await Package.create({
+          senderName,
+          receiverName,
+          senderAddress,
+          receiverAddress,
+          weight: parseFloat(weight as string),
+          costPerUnitWeight: 5,
+          shippingMethod
+        });
+      }
+
+      res.json({
+        success: true,
+        weight,
+        shipping_method: shippingMethod,
+        base_rate: 5,
+        cost: cost.toFixed(2),
+        cost_breakdown: {
+          base_cost: (tempPackage.weight * 5).toFixed(2),
+          method_fee: (cost - (tempPackage.weight * 5)).toFixed(2),
+          total: cost.toFixed(2)
+        },
+        package: savedPackage
+          ? {
+              tracking_number: savedPackage.tracking_number,
+              id: savedPackage.package_id
             }
-
-        } catch (err) {
-            console.error(err);
-            res.status(500).send('Error retrieving package');
-        }
+          : null
+      });
+    } catch (error: any) {
+      console.error('Error calculating shipping cost:', error);
+      res.status(500).json({
+        error: 'Failed to calculate shipping cost',
+        details: error.message
+      });
     }
+  }
 }
 
 
