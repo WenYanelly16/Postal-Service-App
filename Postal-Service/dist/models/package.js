@@ -1,5 +1,4 @@
 //models/packages.js
-
 import pool from '../config/db.js';
 
 export class Package {
@@ -163,3 +162,4 @@ Cost: $${this.calculateCost().toFixed(2)}
     }
   }
 }
+

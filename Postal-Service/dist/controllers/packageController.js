@@ -104,16 +104,14 @@ static async getAllPackages(req, res) {
                 });
             }
 
-            const pkg = await Package.findByTrackingNumber(trackingNumber);
-            
-            if (!pkg) {
-                return res.status(404).json({ 
-                    error: 'Package not found',
-                    tracking_number: trackingNumber
-                });
-            }
+           const updatedPackage = await Package.updateStatus(trackingNumber, status);
 
-            const updatedPackage = await pkg.updateStatus(status);
+if (!updatedPackage) {
+    return res.status(404).json({ 
+        error: 'Package not found or update failed',
+        tracking_number: trackingNumber
+    });
+}
             
             res.json({
                 success: true,
