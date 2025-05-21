@@ -2,13 +2,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import packageRoutes from './routes/packageRoutes.js'; // Ensure packageRoutes.ts exports with `.js` if using ESModules
+import packageRoutes from './routes/routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 2022;
 
 // Middleware
 app.use(express.json());
@@ -36,9 +35,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-}).on('error', (err: Error) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
+const PORT = 2022;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}/`);
 });

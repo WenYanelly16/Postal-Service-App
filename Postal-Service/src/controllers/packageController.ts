@@ -1,32 +1,26 @@
 // controllers/PackageController.ts
+// controllers/packageController.ts
 import { Request, Response } from 'express';
 import { Package } from '../models/package.js';
-import { OneDayPackage } from '../models/OneDayPackage.js';
-import { TwoDayPackage } from '../models/TwoDayPackage.js';
+//import { OneDayPackage } from '../models/OneDayPackage';
+//import { TwoDayPackage } from '../models/TwoDayPackage';
 
 export class PackageController {
+
   static async createPackage(req: Request, res: Response) {
     try {
-      const {
-        senderName,
+      const { 
+        senderName, 
         receiverName,
         senderAddress,
         receiverAddress,
         weight,
         costPerUnitWeight,
         shippingMethod
-      }: {
-        senderName: string;
-        receiverName: string;
-        senderAddress?: string;
-        receiverAddress?: string;
-        weight: number | string;
-        costPerUnitWeight?: number | string;
-        shippingMethod?: string;
       } = req.body;
 
       if (!senderName || !receiverName || !weight) {
-        return res.status(400).json({
+        return res.status(400).json({ 
           error: 'Missing required fields',
           required: ['senderName', 'receiverName', 'weight']
         });
@@ -37,8 +31,8 @@ export class PackageController {
         receiverName,
         senderAddress,
         receiverAddress,
-        weight: parseFloat(weight as string),
-        costPerUnitWeight: parseFloat((costPerUnitWeight || '5') as string),
+        weight: parseFloat(weight),
+        costPerUnitWeight: parseFloat(costPerUnitWeight || '5'),
         shippingMethod: shippingMethod || 'standard'
       });
 
@@ -50,7 +44,7 @@ export class PackageController {
 
     } catch (error: any) {
       console.error('Error creating package:', error);
-      return res.status(500).json({
+      return res.status(500).json({ 
         error: 'Failed to create package',
         details: error.message
       });
@@ -78,7 +72,7 @@ export class PackageController {
       const pkg = await Package.findByTrackingNumber(trackingNumber);
 
       if (!pkg) {
-        return res.status(404).json({
+        return res.status(404).json({ 
           error: 'Package not found',
           tracking_number: trackingNumber
         });
@@ -91,7 +85,7 @@ export class PackageController {
       });
     } catch (error: any) {
       console.error('Error fetching package:', error);
-      res.status(500).json({
+      res.status(500).json({ 
         error: 'Failed to fetch package',
         details: error.message
       });
@@ -101,24 +95,22 @@ export class PackageController {
   static async updatePackageStatus(req: Request, res: Response) {
     try {
       const { trackingNumber } = req.params;
-      const { status } = req.body as { status?: string };
+      const { status } = req.body;
 
       if (!trackingNumber || !status) {
-        return res.status(400).json({
-          error: 'Tracking number and status are required'
+        return res.status(400).json({ 
+          error: 'Tracking number and status are required' 
         });
       }
 
-      const pkg = await Package.findByTrackingNumber(trackingNumber);
+      const updatedPackage = await Package.updateStatus(trackingNumber, status);
 
-      if (!pkg) {
-        return res.status(404).json({
-          error: 'Package not found',
+      if (!updatedPackage) {
+        return res.status(404).json({ 
+          error: 'Package not found or update failed',
           tracking_number: trackingNumber
         });
       }
-
-      const updatedPackage = await pkg.updateStatus(status);
 
       res.json({
         success: true,
@@ -127,7 +119,7 @@ export class PackageController {
       });
     } catch (error: any) {
       console.error('Error updating package status:', error);
-      res.status(500).json({
+      res.status(500).json({ 
         error: 'Failed to update package status',
         details: error.message
       });
@@ -145,7 +137,7 @@ export class PackageController {
       const deletedPackage = await Package.delete(trackingNumber);
 
       if (!deletedPackage) {
-        return res.status(404).json({
+        return res.status(404).json({ 
           error: 'Package not found',
           tracking_number: trackingNumber
         });
@@ -158,7 +150,7 @@ export class PackageController {
       });
     } catch (error: any) {
       console.error('Error deleting package:', error);
-      res.status(500).json({
+      res.status(500).json({ 
         error: 'Failed to delete package',
         details: error.message
       });
@@ -167,7 +159,7 @@ export class PackageController {
 
   static async calculateShippingCost(req: Request, res: Response) {
     try {
-      const {
+      const { 
         senderName = 'Calculation Temp',
         receiverName = 'Calculation Temp',
         senderAddress = 'N/A',
@@ -175,19 +167,11 @@ export class PackageController {
         weight,
         shippingMethod,
         calculateOnly = false
-      }: {
-        senderName?: string;
-        receiverName?: string;
-        senderAddress?: string;
-        receiverAddress?: string;
-        weight?: number | string;
-        shippingMethod?: string;
-        calculateOnly?: boolean;
       } = req.body;
 
       if (!weight || !shippingMethod) {
-        return res.status(400).json({
-          error: 'Weight and shipping method are required'
+        return res.status(400).json({ 
+          error: 'Weight and shipping method are required' 
         });
       }
 
@@ -196,7 +180,7 @@ export class PackageController {
         receiver_name: receiverName,
         sender_address: senderAddress,
         receiver_address: receiverAddress,
-        weight: parseFloat(weight as string),
+        weight: parseFloat(weight),
         cost_per_unit_weight: 5,
         shipping_method: shippingMethod,
         tracking_number: 'TEMP-' + Math.random().toString(36).substr(2, 9)
@@ -211,7 +195,7 @@ export class PackageController {
           receiverName,
           senderAddress,
           receiverAddress,
-          weight: parseFloat(weight as string),
+          weight: parseFloat(weight),
           costPerUnitWeight: 5,
           shippingMethod
         });
@@ -228,21 +212,20 @@ export class PackageController {
           method_fee: (cost - (tempPackage.weight * 5)).toFixed(2),
           total: cost.toFixed(2)
         },
-        package: savedPackage
-          ? {
-              tracking_number: savedPackage.tracking_number,
-              id: savedPackage.package_id
-            }
-          : null
+        package: savedPackage ? {
+          tracking_number: savedPackage.tracking_number,
+          id: savedPackage.package_id
+        } : null
       });
     } catch (error: any) {
       console.error('Error calculating shipping cost:', error);
-      res.status(500).json({
+      res.status(500).json({ 
         error: 'Failed to calculate shipping cost',
         details: error.message
       });
     }
   }
 }
+
 
 
