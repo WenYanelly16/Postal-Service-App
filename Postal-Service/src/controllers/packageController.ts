@@ -1,9 +1,6 @@
 // controllers/PackageController.ts
-// controllers/packageController.ts
 import { Request, Response } from 'express';
 import { Package } from '../models/package.js';
-//import { OneDayPackage } from '../models/OneDayPackage';
-//import { TwoDayPackage } from '../models/TwoDayPackage';
 
 export class PackageController {
 
