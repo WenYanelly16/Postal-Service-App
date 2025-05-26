@@ -4,104 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Postal Service</title>
-  <link rel="stylesheet" href="styles.css"> 
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Postal Service System</h1>
-        
-        <div class="btn-group">
-            <button class="btn" onclick="showSection('addPackage')">Add Package</button>
-            <button class="btn" onclick="showSection('viewPackages')">View Packages</button>
-            <button class="btn" onclick="showSection('viewLabel')">View Label</button>
-            <button class="btn" onclick="showSection('calculateCost')">Calculate Cost</button>
+    <div class="app-container">
+        <header>
+            <h1><i class="fas fa-shipping-fast"></i>Postal Service</h1>
+            <p class="subtitle">Ship with elegance and ease</p>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showSection('add')"><i class="fas fa-plus-circle"></i> New Shipment</button>
+            <button class="tab-btn" onclick="showSection('view')"><i class="fas fa-box-open"></i> Your Packages</button>
+            <button class="tab-btn" onclick="showSection('label')"><i class="fas fa-tag"></i> Get Label</button>
+            <button class="tab-btn" onclick="showSection('calculate')"><i class="fas fa-calculator"></i> Calculate Cost</button>
         </div>
 
         <!-- Add Package Section -->
-        <div id="addPackage" class="section active">
-            <h2>Add New Package</h2>
-            <form id="packageForm">
-                <div class="form-group">
-                    <label for="senderName">Sender Name:</label>
-                    <input type="text" id="senderName" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="receiverName">Receiver Name:</label>
-                    <input type="text" id="receiverName" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="senderAddress">Sender Address:</label>
-                    <input type="text" id="senderAddress" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="receiverAddress">Receiver Address:</label>
-                    <input type="text" id="receiverAddress" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="weight">Weight (kg):</label>
-                    <input type="number" id="weight" step="0.01" min="0.01" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="costPerUnitWeight">Cost per kg:</label>
-                    <input type="number" id="costPerUnitWeight" step="0.01" min="0.01" value="5.00">
-                </div>
-                
-                <div class="form-group">
-                    <label for="shippingMethod">Shipping Method:</label>
-                    <select id="shippingMethod" required>
-                        <option value="two-day">Two Day (+$10)</option>
-                        <option value="one-day">One Day (+$15)</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="btn btn-success">Create Package</button>
-                <div id="formMessage" class="message"></div>
-            </form>
+        <div id="add" class="content-section active">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-box"></i> Create New Shipment</h2>
+                <form id="packageForm">
+                    <div class="form-group">
+                        <label for="senderName">Sender Name</label>
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="senderName" required placeholder="Enter sender's full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="receiverName">Receiver Name</label>
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="receiverName" required placeholder="Enter receiver's full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="senderAddress">Sender Address</label>
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" id="senderAddress" required placeholder="Enter complete sender address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="receiverAddress">Receiver Address</label>
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" id="receiverAddress" required placeholder="Enter complete receiver address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="weight">Package Weight (kg)</label>
+                        <i class="fas fa-weight-hanging"></i>
+                        <input type="number" id="weight" step="0.01" min="0.01" required placeholder="Enter weight in kilograms">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="costPerUnitWeight">Cost per kg ($)</label>
+                        <i class="fas fa-dollar-sign"></i>
+                        <input type="number" id="costPerUnitWeight" step="0.01" min="0.01" value="5.00" placeholder="Enter cost per kilogram">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="shippingMethod">Shipping Method</label>
+                        <select id="shippingMethod" required>
+                            <option value="">Select shipping method</option>
+                            <option value="two-day"><i class="fas fa-truck"></i> Standard (2-3 days) +$10</option>
+                            <option value="one-day"><i class="fas fa-rocket"></i> Express (Next day) +$15</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Create Shipment</button>
+                    <div id="formMessage" class="message"></div>
+                </form>
+            </div>
         </div>
 
         <!-- View Packages Section -->
-        <div id="viewPackages" class="section">
-            <h2>All Packages</h2>
-            <ul id="packageList"></ul>
+        <div id="view" class="content-section">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-boxes"></i> Your Packages</h2>
+                <div id="packageList" class="package-list">
+                    <!-- Packages will be loaded here -->
+                </div>
+            </div>
         </div>
 
         <!-- View Label Section -->
-        <div id="viewLabel" class="section">
-            <h2>View Shipping Label</h2>
-            <div class="form-group">
-                <label for="trackingInput">Enter Tracking Number:</label>
-                <input type="text" id="trackingInput">
+        <div id="label" class="content-section">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-tag"></i> Shipping Label</h2>
+                <div class="form-group">
+                    <label for="trackingInput">Enter Tracking Number</label>
+                    <i class="fas fa-barcode"></i>
+                    <input type="text" id="trackingInput" placeholder="e.g. PKG12345678">
+                </div>
+                <button class="btn" onclick="getPackageLabel()"><i class="fas fa-search"></i> Generate Label</button>
+                <div id="labelContainer" class="label-container" style="display: none;"></div>
             </div>
-            <button class="btn" onclick="getPackageLabel()">Get Label</button>
-            <div id="labelContainer" style="display: none;"></div>
         </div>
 
         <!-- Calculate Cost Section -->
-        <div id="calculateCost" class="section">
-            <h2>Calculate Shipping Cost</h2>
-            <div class="form-group">
-                <label for="calcWeight">Weight (kg):</label>
-                <input type="number" id="calcWeight" step="0.01" min="0.01" required>
+        <div id="calculate" class="content-section">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-calculator"></i> Shipping Calculator</h2>
+                <div class="form-group">
+                    <label for="calcWeight">Package Weight (kg)</label>
+                    <i class="fas fa-weight-hanging"></i>
+                    <input type="number" id="calcWeight" step="0.01" min="0.01" required placeholder="Enter weight in kilograms">
+                </div>
+                
+                <div class="form-group">
+                    <label for="calcShippingMethod">Shipping Method</label>
+                    <select id="calcShippingMethod" required>
+                        <option value="">Select shipping method</option>
+                        <option value="two-day">Standard (2-3 days) +$10</option>
+                        <option value="one-day">Express (Next day) +$15</option>
+                    </select>
+                </div>
+                
+                <button class="btn" onclick="calculateShippingCost()"><i class="fas fa-calculator"></i> Calculate Cost</button>
+                <div id="costResult" style="margin-top: 20px;"></div>
             </div>
-            
-            <div class="form-group">
-                <label for="calcShippingMethod">Shipping Method:</label>
-                <select id="calcShippingMethod" required>
-                    <option value="two-day">Two Day (+$10)</option>
-                    <option value="one-day">One Day (+$15)</option>
-                </select>
-            </div>
-            
-            <button class="btn" onclick="calculateShippingCost()">Calculate</button>
-            <div id="costResult" style="margin-top: 20px;"></div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js"></script>  
 </body>
 </html>

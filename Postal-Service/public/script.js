@@ -1,23 +1,29 @@
  // Current active section
-        let activeSection = 'addPackage';
+        let activeSection = 'add';
         
         // Show/hide sections
         function showSection(sectionId) {
-            document.querySelectorAll('.section').forEach(section => {
+            document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
             document.getElementById(sectionId).classList.add('active');
+            document.querySelector(`.tab-btn[onclick="showSection('${sectionId}')"]`).classList.add('active');
             activeSection = sectionId;
             
             // Special handling for certain sections
-            if (sectionId === 'viewPackages') {
+            if (sectionId === 'view') {
                 loadPackages();
             }
         }
 
         // Helper functions for messages
         function showMessage(element, message, isError = false) {
-            element.textContent = message;
+            const icon = isError ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="fas fa-check-circle"></i>';
+            element.innerHTML = icon + ' ' + message;
             element.className = isError ? 'message error' : 'message success';
         }
 
@@ -57,9 +63,9 @@
                 // Success handling
                 formMessage.className = 'message success';
                 formMessage.innerHTML = `
-                    Package created! Tracking #: ${result.tracking_number}
-                    <button class="btn" onclick="copyToClipboard('${result.tracking_number}')" style="margin-left: 10px; padding: 5px 10px;">
-                        Copy Tracking Number
+                    <i class="fas fa-check-circle"></i> Package created! Tracking #: ${result.tracking_number}
+                    <button class="btn btn-secondary" onclick="copyToClipboard('${result.tracking_number}')" style="margin-top: 10px;">
+                        <i class="fas fa-copy"></i> Copy Tracking Number
                     </button>
                 `;
                 
@@ -67,135 +73,161 @@
                 document.getElementById('packageForm').reset();
                 
                 // Auto-show the packages list
-                showSection('viewPackages');
+                showSection('view');
                 await loadPackages();
 
             } catch (error) {
                 console.error('Error:', error);
-                formMessage.className = 'message error';
-                formMessage.textContent = error.message;
+                showMessage(formMessage, error.message, true);
             }
         });
 
         // Helper function
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text)
-                .then(() => alert('Tracking number copied!'))
+                .then(() => alert('Tracking number copied to clipboard!'))
                 .catch(err => console.error('Copy failed:', err));
         }
 
         // Load all packages with delete and update functionality
-       async function loadPackages() {
-    const packageList = document.getElementById('packageList');
-    packageList.innerHTML = '<li>Loading packages...</li>';
-    
-    try {
-        const response = await fetch('/api/packages');
-        
-        // First check if the response is OK
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status} ${response.statusText}`);
+        async function loadPackages() {
+            const packageList = document.getElementById('packageList');
+            packageList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Loading your packages...</div>';
+            
+            try {
+                const response = await fetch('/api/packages');
+                
+                // First check if the response is OK
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status} ${response.statusText}`);
+                }
+
+                // Check if response has content
+                const text = await response.text();
+                if (!text) {
+                    throw new Error('Empty response from server');
+                }
+
+                // Try to parse JSON
+                const result = JSON.parse(text);
+                
+                const packages = Array.isArray(result) ? result : (result.packages || []);
+                
+                if (packages.length === 0) {
+                    packageList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-light);"><i class="fas fa-box-open"></i> No packages found. Create your first shipment!</div>';
+                    return;
+                }
+                
+                packageList.innerHTML = '';
+                packages.forEach(pkg => {
+                    let statusIcon = '';
+                    let statusClass = '';
+                    
+                    switch(pkg.status) {
+                        case 'created':
+                            statusIcon = '<i class="fas fa-edit"></i>';
+                            statusClass = 'status-created';
+                            break;
+                        case 'in-transit':
+                            statusIcon = '<i class="fas fa-truck"></i>';
+                            statusClass = 'status-in-transit';
+                            break;
+                        case 'delivered':
+                            statusIcon = '<i class="fas fa-check-circle"></i>';
+                            statusClass = 'status-delivered';
+                            break;
+                        case 'returned':
+                            statusIcon = '<i class="fas fa-undo"></i>';
+                            statusClass = 'status-returned';
+                            break;
+                        default:
+                            statusIcon = '<i class="fas fa-question-circle"></i>';
+                            statusClass = 'status-created';
+                    }
+                    
+                    const packageCard = document.createElement('div');
+                    packageCard.className = 'package-card';
+                    packageCard.innerHTML = `
+                        <div class="package-header">
+                            <span class="tracking-number"><i class="fas fa-barcode"></i> ${pkg.tracking_number}</span>
+                            <span class="package-status ${statusClass}">${statusIcon} ${pkg.status || 'Unknown'}</span>
+                        </div>
+                        <div class="package-details">
+                            <p><i class="fas fa-user"></i> <strong>From:</strong> ${pkg.sender_name}</p>
+                            <p><i class="fas fa-user"></i> <strong>To:</strong> ${pkg.receiver_name}</p>
+                            <p><i class="fas fa-weight-hanging"></i> <strong>Weight:</strong> ${pkg.weight} kg</p>
+                            <p><i class="fas fa-shipping-fast"></i> <strong>Method:</strong> ${pkg.shipping_method || 'Standard'}</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Update Status</label>
+                            <select class="status-select" id="status-${pkg.tracking_number}">
+                                <option value="created" ${pkg.status === 'created' ? 'selected' : ''}><i class="fas fa-edit"></i> Created</option>
+                                <option value="in-transit" ${pkg.status === 'in-transit' ? 'selected' : ''}><i class="fas fa-truck"></i> In Transit</option>
+                                <option value="delivered" ${pkg.status === 'delivered' ? 'selected' : ''}><i class="fas fa-check-circle"></i> Delivered</option>
+                                <option value="returned" ${pkg.status === 'returned' ? 'selected' : ''}><i class="fas fa-undo"></i> Returned</option>
+                            </select>
+                        </div>
+                        <div class="package-actions">
+                            <button class="action-btn update-btn"
+                                onclick="updatePackageStatus('${pkg.tracking_number}')">
+                                <i class="fas fa-sync-alt"></i> Update Status
+                            </button>
+                            <button class="action-btn delete-btn"
+                                onclick="deletePackage('${pkg.tracking_number}')">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </div>
+                    `;
+                    packageList.appendChild(packageCard);
+                });
+            } catch (error) {
+                console.error('Error loading packages:', error);
+                packageList.innerHTML = `
+                    <div class="message error" style="grid-column: 1/-1;">
+                        <i class="fas fa-exclamation-triangle"></i> Error loading packages: ${error.message}
+                        <button class="btn" onclick="loadPackages()" style="margin-top: 15px;">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
+                    </div>
+                `;
+            }
         }
 
-        // Check if response has content
-        const text = await response.text();
-        if (!text) {
-            throw new Error('Empty response from server');
-        }
-
-        // Try to parse JSON
-        const result = JSON.parse(text);
-        
-        const packages = Array.isArray(result) ? result : (result.packages || []);
-        
-        if (packages.length === 0) {
-            packageList.innerHTML = '<li class="package-item">No packages found</li>';
-            return;
-        }
-        
-        packageList.innerHTML = '';
-        packages.forEach(pkg => {
-            const li = document.createElement('li');
-            li.className = 'package-item';
-            li.innerHTML = `
-                <div class="package-header">
-                    <span class="package-title">${pkg.tracking_number}</span>
-                    <span>Status: ${pkg.status || 'Unknown'}</span>
-                </div>
-                <div class="package-details">
-                    <strong>From:</strong> ${pkg.sender_name}<br>
-                    <strong>To:</strong> ${pkg.receiver_name}<br>
-                    <strong>Weight:</strong> ${pkg.weight}kg | 
-                    <strong>Method:</strong> ${pkg.shipping_method}
-                </div>
-                <div class="package-actions">
-                    <select class="status-select" id="status-${pkg.tracking_number}">
-                        <option value="created" ${pkg.status === 'created' ? 'selected' : ''}>Created</option>
-                        <option value="in-transit" ${pkg.status === 'in-transit' ? 'selected' : ''}>In Transit</option>
-                        <option value="delivered" ${pkg.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                        <option value="returned" ${pkg.status === 'returned' ? 'selected' : ''}>Returned</option>
-                    </select>
-                    <button class="btn btn-warning update-btn" 
-                        onclick="updatePackageStatus('${pkg.tracking_number}')">
-                        Update Status
-                    </button>
-                    <button class="btn btn-danger delete-btn" 
-                        onclick="deletePackage('${pkg.tracking_number}')">
-                        Delete Package
-                    </button>
-                </div>
-            `;
-            packageList.appendChild(li);
-        });
-    } catch (error) {
-        console.error('Error loading packages:', error);
-        packageList.innerHTML = `
-            <li class="package-item" style="color: var(--danger-color);">
-                Error loading packages: ${error.message}
-                <button class="btn" onclick="loadPackages()" style="margin-left: 10px;">Retry</button>
-            </li>
-        `;
-    }
-}
         // Update package status
         async function updatePackageStatus(trackingNumber) {
-    const statusSelect = document.getElementById(`status-${trackingNumber}`);
-    const newStatus = statusSelect.value;
+            const statusSelect = document.getElementById(`status-${trackingNumber}`);
+            const newStatus = statusSelect.value;
 
-    try {
-        const response = await fetch(`/api/packages/${trackingNumber}/status`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ status: newStatus })
-        });
+            try {
+                const response = await fetch(`/api/packages/${trackingNumber}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
 
-        //const response = await fetch(url, options);
-const text = await response.text();
-console.log('Response text:', text);
+                const text = await response.text();
+                console.log('Response text:', text);
 
+                // Try parsing JSON
+                const result = JSON.parse(text);
 
-        // Try parsing JSON
-        const result = JSON.parse(text);
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to update status');
+                }
 
-        if (!response.ok) {
-            throw new Error(result.error || 'Failed to update status');
+                alert('Package status updated successfully!');
+                loadPackages();
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Error updating status: ${error.message}`);
+            }
         }
-
-        alert('Package status updated successfully!');
-        loadPackages();
-    } catch (error) {
-        console.error('Error:', error);
-        alert(`Error updating status: ${error.message}`);
-    }
-}
-
-
 
         // Delete package
         async function deletePackage(trackingNumber) {
-            if (!confirm('Are you sure you want to delete this package?')) {
+            if (!confirm('Are you sure you want to permanently delete this package?')) {
                 return;
             }
             
@@ -229,7 +261,7 @@ console.log('Response text:', text);
             }
 
             labelContainer.style.display = 'none';
-            labelContainer.innerHTML = 'Loading label...';
+            labelContainer.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading label...';
             
             try {
                 const response = await fetch(`/api/packages/${trackingNumber}`);
@@ -242,7 +274,7 @@ console.log('Response text:', text);
                 const pkg = result.package || result;
                 const label = result.label || `
 ══════════════════════════════════
-           SHIPPING LABEL           
+           SHIPPING LABEL          
 ══════════════════════════════════
 Tracking #: ${pkg.tracking_number}
 
@@ -262,13 +294,22 @@ Method: ${pkg.shipping_method}
                 `;
                 
                 labelContainer.innerHTML = `
-                    <h3>Shipping Label - ${pkg.tracking_number}</h3>
+                    <h3 style="margin-bottom: 15px; color: var(--lavender-primary);">
+                        <i class="fas fa-tag"></i> Shipping Label - ${pkg.tracking_number}
+                    </h3>
                     <pre>${label}</pre>
+                    <button class="btn btn-secondary" onclick="window.print()" style="margin-top: 15px;">
+                        <i class="fas fa-print"></i> Print Label
+                    </button>
                 `;
                 labelContainer.style.display = 'block';
             } catch (error) {
                 console.error('Error:', error);
-                labelContainer.innerHTML = `Error: ${error.message}`;
+                labelContainer.innerHTML = `
+                    <div class="message error">
+                        <i class="fas fa-exclamation-triangle"></i> Error: ${error.message}
+                    </div>
+                `;
                 labelContainer.style.display = 'block';
             }
         }
@@ -284,6 +325,11 @@ Method: ${pkg.shipping_method}
                 return;
             }
 
+            if (!method) {
+                alert('Please select a shipping method');
+                return;
+            }
+
             try {
                 const response = await fetch('/api/packages/calculate-shipping', {
                     method: 'POST',
@@ -291,8 +337,8 @@ Method: ${pkg.shipping_method}
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ 
-                        weight, 
+                    body: JSON.stringify({
+                        weight,
                         shippingMethod: method,
                         calculateOnly: true
                     })
@@ -307,17 +353,19 @@ Method: ${pkg.shipping_method}
                 
                 let resultHTML = `
                     <div class="cost-breakdown">
-                        <h3>Shipping Cost Estimate</h3>
-                        <p><strong>Base Cost:</strong> $${data.cost_breakdown.base_cost} (${weight}kg × $${data.base_rate}/kg)</p>
-                        <p><strong>Shipping Method:</strong> ${method.replace('-', ' ')} $${data.cost_breakdown.method_fee > 0 ? `(+$${data.cost_breakdown.method_fee})` : ''}</p>
-                        <p class="cost-total"><strong>Total Cost:</strong> $${data.cost_breakdown.total}</p>
+                        <h3 style="margin-bottom: 15px; color: var(--lavender-primary);">
+                            <i class="fas fa-receipt"></i> Shipping Cost Estimate
+                        </h3>
+                        <p><i class="fas fa-weight-hanging"></i> <strong>Base Cost:</strong> $${data.cost_breakdown.base_cost} (${weight}kg × $${data.base_rate}/kg)</p>
+                        <p><i class="fas fa-shipping-fast"></i> <strong>Shipping Method:</strong> ${method.replace('-', ' ')} $${data.cost_breakdown.method_fee > 0 ? `(+$${data.cost_breakdown.method_fee})` : ''}</p>
+                        <p class="cost-total"><i class="fas fa-dollar-sign"></i> <strong>Total Cost:</strong> $${data.cost_breakdown.total}</p>
                     </div>
                 `;
                 
                 if (data.package) {
                     resultHTML += `
-                        <div class="success-message">
-                            Package saved with tracking #: ${data.package.tracking_number}
+                        <div class="message success" style="margin-top: 15px;">
+                            <i class="fas fa-check-circle"></i> Package saved with tracking #: ${data.package.tracking_number}
                         </div>
                     `;
                 }
@@ -326,8 +374,8 @@ Method: ${pkg.shipping_method}
             } catch (error) {
                 console.error('Error:', error);
                 costResult.innerHTML = `
-                    <div class="error-message">
-                        Error: ${error.message}
+                    <div class="message error">
+                        <i class="fas fa-exclamation-triangle"></i> Error: ${error.message}
                     </div>
                 `;
             }
@@ -337,3 +385,4 @@ Method: ${pkg.shipping_method}
         document.addEventListener('DOMContentLoaded', () => {
             showSection(activeSection);
         });
+    

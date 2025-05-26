@@ -35,7 +35,7 @@ export class PackageController {
 
       return res.status(201).json({
         success: true,
-        tracking_number: newPackage.tracking_number,
+        tracking_number: newPackage.trackingNumber,
         package: newPackage
       });
 
@@ -210,7 +210,7 @@ export class PackageController {
           total: cost.toFixed(2)
         },
         package: savedPackage ? {
-          tracking_number: savedPackage.tracking_number,
+          tracking_number: savedPackage.trackingNumber,
           id: savedPackage.package_id
         } : null
       });

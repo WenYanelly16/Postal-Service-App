@@ -5,11 +5,11 @@ export interface IPackage {
     receiverName: string;
     senderAddress: string;
     receiverAddress: string;
-    trackingNumber: string;
-    status: string;
     weight: number;
     costPerUnitWeight: number;
-
+    trackingNumber: string;
+    status: string;
+    shippingMethod: string;
     calculateCost(): number;
     printLabel(): void;
     updateStatus(newStatus: string): void;
